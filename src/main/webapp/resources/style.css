@@ -1,0 +1,11 @@
+html {
+    background-color: ghostwhite;
+}
+.panel {
+    background-color: white;
+    width: 30%;
+    margin: 10px;
+    float: left;
+    box-shadow: 3px 4px 8px #888;
+    height: 300px;
+}

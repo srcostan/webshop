@@ -1,0 +1,25 @@
+<!DOCTYPE web-app PUBLIC
+ "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN"
+ "http://java.sun.com/dtd/web-app_2_3.dtd" >
+
+<web-app>
+  <display-name>Webshop</display-name>
+
+  <filter>
+    <filter-name>ControllerFilter</filter-name>
+    <filter-class>com.costan.webshop.web.framework.ControllerFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>ControllerFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+
+  <servlet>
+    <servlet-name>ControllerServlet</servlet-name>
+    <servlet-class>com.costan.webshop.web.framework.ControllerServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>ControllerServlet</servlet-name>
+    <url-pattern>/pages/*</url-pattern>
+  </servlet-mapping>
+</web-app>
