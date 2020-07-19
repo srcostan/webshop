@@ -16,7 +16,7 @@ public class Router {
         controllerRouter = new HashMap<>();
     }
 
-    public void addController(Class controllerClass) {
+    public void registerController(Class controllerClass) {
         Path controllerPath = (Path) controllerClass.getDeclaredAnnotation(Path.class);
         try {
             Object controller = controllerClass.getDeclaredConstructor().newInstance();
@@ -28,7 +28,6 @@ public class Router {
                 }
             }
             controllerRouter.put(controllerPath.value().replace("/", ""), mapping);
-
         } catch (Exception e) {
             throw new IllegalArgumentException(e);
         }
@@ -44,5 +43,4 @@ public class Router {
             throw new IllegalStateException(e);
         }
     }
-
 }
