@@ -1,11 +1,69 @@
 html {
     background-color: ghostwhite;
+    min-height: 100%;
 }
 .panel {
     background-color: white;
-    width: 30%;
     margin: 10px;
     float: left;
     box-shadow: 3px 4px 8px #888;
-    height: 300px;
+    min-height: 300px;
+}
+
+#categories {
+    width: 15%;
+}
+#products {
+    width: 60%;
+}
+#shopping-cart {
+    width: 15%;
+}
+
+
+#header {
+    width: 100%;
+    height: 70px;
+    background-color: #131921;
+}
+#header #title {
+    font-size: 35px;
+    color: white;
+    font-weight: 900;
+    margin-left: 40px;
+    vertical-align: middle;
+}
+
+#footer {
+    width: 100%;
+    height: 50px;
+    background-color: #131921;
+    bottom: 0;
+    position: fixed;
+    left: 0;
+    color: white;
+    text-align: center;
+}
+
+#trademark {
+    width: 50%;
+    float: left;
+}
+
+#about-us {
+    width: 50%;
+    float: left;
+}
+
+.list {
+
+}
+
+.list .list-item {
+    height: 35px;
+    border-bottom: 1px solid lightgray;
+}
+
+.list .list-item .list-item-txt {
+    margin-left: 10px;
 }
