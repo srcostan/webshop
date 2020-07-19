@@ -17,7 +17,7 @@ class DatabaseImpl implements Database {
 
     private static final String DB_DIRECTORY_PATH = "database_tables/";
     private static final String TABLE_SUFFIX = "_table";
-    private static final String COLUMN_SEPARATOR = "--^_^--";
+    private static final String COLUMN_SEPARATOR = "###";
 
     private Map<Class, Path> entityClassTablePaths;
 
@@ -32,7 +32,7 @@ class DatabaseImpl implements Database {
         try {
             Path tablePath = getTablePathFromEntityClass(entityClass);
             entityClassTablePaths.put(entityClass, tablePath);
-            Files.createDirectory(Paths.get(DB_DIRECTORY_PATH));
+            createTableDirectory();
             Files.createFile(tablePath);
         } catch (FileAlreadyExistsException existsException) {
             return;
@@ -64,6 +64,12 @@ class DatabaseImpl implements Database {
             return rows.stream().map(r -> createEntityFromRow(entityClass, r)).collect(Collectors.toList());
         } catch (IOException e) {
             throw new IllegalStateException(e);
+        }
+    }
+
+    private void createTableDirectory() throws IOException {
+        if (!Files.exists(Paths.get(DB_DIRECTORY_PATH))) {
+            Files.createDirectory(Paths.get(DB_DIRECTORY_PATH));
         }
     }
 

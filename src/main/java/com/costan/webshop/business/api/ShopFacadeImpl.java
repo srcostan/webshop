@@ -6,11 +6,12 @@ import com.costan.webshop.business.domain.ProductRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 class ShopFacadeImpl implements ShopFacade {
 
-    private ProductRepository productRepository;
-    private CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
 
     public ShopFacadeImpl() {
         this(new DomainServiceLocator());
@@ -23,19 +24,15 @@ class ShopFacadeImpl implements ShopFacade {
 
     @Override
     public List<CategoryDTO> getAllCategories() {
-        List<CategoryDTO> categories = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
-            categories.add(new CategoryDTO(i, "category" + i));
-        }
-        return categories;
+        return categoryRepository.findAllCategories()
+                .stream().map(c -> new CategoryDTO(c.getId(), c.getName()))
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<ProductDTO> getProductsByCategory(String categoryId) {
-        List<ProductDTO> products = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
-            products.add(new ProductDTO(i, categoryId + " product" +  + i, 2.1 * i));
-        }
-        return products;
+        return productRepository.findAllProducts().stream()
+                .map(p -> new ProductDTO(p.getId(), "cat selected " + categoryId + p.getTitle(), p.getPrice()))
+                .collect(Collectors.toList());
     }
 }
