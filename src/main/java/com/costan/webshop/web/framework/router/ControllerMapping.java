@@ -23,7 +23,7 @@ class ControllerMapping {
 
     ModelAndView executeMethod(String path, String[] methodParameters) throws InvocationTargetException, IllegalAccessException {
         Method method = routes.get(path);
-        return (ModelAndView) method.invoke(instance, methodParameters);
+        return (ModelAndView) method.invoke(instance, (Object[])methodParameters);
     }
 
 }
