@@ -4,18 +4,20 @@ import com.costan.webshop.persistence.annotation.DbColumn;
 import com.costan.webshop.persistence.annotation.DbEntity;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Database {
 
     private static final String DB_DIRECTORY_PATH = "database_tables/";
     private static final String TABLE_SUFFIX = "_table";
-    private static final String COLUMN_SEPARATOR = "$||$";
+    private static final String COLUMN_SEPARATOR = "--^_^--";
 
     private Map<Class, Path> entityClassTablePaths;
 
@@ -38,7 +40,7 @@ public class Database {
         }
     }
 
-    public void insert(Object entity) {
+    public void persist(Object entity) {
         if (!entity.getClass().isAnnotationPresent(DbEntity.class)) {
             throw new IllegalArgumentException("object is not a db entity");
         }
@@ -51,8 +53,43 @@ public class Database {
         }
     }
 
-    public <T> List<T> getAllRecords(T entity) {
-        return null;
+    public <T> List<T> getAllRecords(Class<T> entityClass) {
+        Path tablePath = entityClassTablePaths.get(entityClass);
+        try {
+            List<String> rows = Files.readAllLines(tablePath);
+            return rows.stream().map(r -> createEntityFromRow(r, entityClass)).collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private <T> T createEntityFromRow(String row, Class<T> entityClass) {
+        String[] fieldValues = row.split(COLUMN_SEPARATOR);
+        int i = 0;
+        try {
+            T entity = entityClass.getConstructor().newInstance();
+            for (Field field : entity.getClass().getDeclaredFields()) {
+                if (field.isAnnotationPresent(DbColumn.class)) {
+                    Class typeClass = field.getType();
+                    Constructor typeConstructor = typeClass.getConstructor(String.class);
+                    try {
+                        Object value = typeConstructor.newInstance(fieldValues[i]);
+                        if (field.canAccess(entity)) {
+                            field.set(entity, value);
+                        }
+                        field.setAccessible(true);
+                        field.set(entity, value);
+                        field.setAccessible(false);
+                        i++;
+                    } catch (IllegalAccessException e) {
+                        throw new IllegalArgumentException(e);
+                    }
+                }
+            }
+            return entity;
+        } catch (Exception e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     private String getRowToWrite(Object entity) {
@@ -63,7 +100,7 @@ public class Database {
                 fieldValues.add(getFieldValue(entity, field));
             }
         }
-        return String.join(COLUMN_SEPARATOR, fieldValues);
+        return String.join(COLUMN_SEPARATOR, fieldValues) + System.lineSeparator();
     }
 
     private String getFieldValue(Object entity, Field field) {
@@ -79,7 +116,6 @@ public class Database {
             throw new IllegalArgumentException(e);
         }
     }
-
 
     private Path getTablePathFromEntityClass(Class entityClass) {
         return Paths.get(DB_DIRECTORY_PATH + entityClass.getSimpleName() + TABLE_SUFFIX);
