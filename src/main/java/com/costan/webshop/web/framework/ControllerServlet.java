@@ -19,18 +19,19 @@ public class ControllerServlet extends HttpServlet {
         initControllers();
     }
 
-    private void initControllers() {
-        String[] controllersClassNames = new String[] {
+    private void initControllers() throws ServletException {
+        String[] controllersClassNames = new String[]{
                 "com.costan.webshop.web.controller.FrontPageController",
-                "com.costan.webshop.web.controller.ProductsController"
+                "com.costan.webshop.web.controller.ProductsController",
+                "com.costan.webshop.web.controller.ShoppingCartController"
         };
         try {
             for (String controllerName : controllersClassNames) {
                 Class controllerClass = Class.forName(controllerName);
-                router.addController(controllerClass);
+                router.registerController(controllerClass);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new ServletException(e);
         }
     }
 
@@ -53,7 +54,7 @@ public class ControllerServlet extends HttpServlet {
             }
             return methodParameters;
         }
-        return null;
+        return new String[]{};
     }
 
 }
