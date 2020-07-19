@@ -1,9 +1,25 @@
 package com.costan.webshop.business.api;
 
+import com.costan.webshop.business.domain.CategoryRepository;
+import com.costan.webshop.business.domain.DomainServiceLocator;
+import com.costan.webshop.business.domain.ProductRepository;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class ShopFacadeImpl implements ShopFacade {
+class ShopFacadeImpl implements ShopFacade {
+
+    private ProductRepository productRepository;
+    private CategoryRepository categoryRepository;
+
+    public ShopFacadeImpl() {
+        this(new DomainServiceLocator());
+    }
+
+    public ShopFacadeImpl(DomainServiceLocator domainServiceLocator) {
+        productRepository = domainServiceLocator.getProductRepository();
+        categoryRepository = domainServiceLocator.getCategoryRepository();
+    }
 
     @Override
     public List<CategoryDTO> getAllCategories() {

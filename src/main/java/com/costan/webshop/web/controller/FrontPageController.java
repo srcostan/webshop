@@ -1,7 +1,7 @@
 package com.costan.webshop.web.controller;
 
+import com.costan.webshop.business.api.ApiServiceLocator;
 import com.costan.webshop.business.api.ShopFacade;
-import com.costan.webshop.business.api.ShopFacadeImpl;
 import com.costan.webshop.web.framework.ModelAndView;
 import com.costan.webshop.web.framework.annotation.GetMapping;
 import com.costan.webshop.web.framework.annotation.Path;
@@ -14,7 +14,11 @@ public class FrontPageController {
     private ShopFacade shopFacade;
 
     public FrontPageController() {
-        shopFacade = new ShopFacadeImpl();
+        this(new ApiServiceLocator());
+    }
+
+    public FrontPageController(ApiServiceLocator apiServiceLocator) {
+        shopFacade = apiServiceLocator.getShopFacade();
     }
 
     @GetMapping
