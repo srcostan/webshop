@@ -40,7 +40,7 @@ public class Router {
         try {
             return controllerRouter.get(controllerPath).executeMethod(methodPath, parameters);
         } catch (InvocationTargetException | IllegalAccessException e) {
-            throw new IllegalStateException(e);
+            throw new IllegalArgumentException(e);
         }
     }
 }
