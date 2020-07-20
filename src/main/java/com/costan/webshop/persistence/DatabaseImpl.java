@@ -112,7 +112,6 @@ class DatabaseImpl implements Database {
     }
 
     private String getRowToWrite(Object entity) {
-        StringBuilder sb = new StringBuilder("");
         List<String> fieldValues = new ArrayList<>();
         for (Field field : entity.getClass().getDeclaredFields()) {
             if (field.isAnnotationPresent(DbColumn.class)) {

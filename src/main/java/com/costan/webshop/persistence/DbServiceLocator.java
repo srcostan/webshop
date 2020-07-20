@@ -51,7 +51,7 @@ public class DbServiceLocator {
             Product prod = new Product();
             prod.setId(i);
             prod.setTitle("product - " + i);
-            prod.setPrice(Math.random());
+            prod.setPrice(Math.random() * 10);
             database.persist(prod);
         }
     }

@@ -55,15 +55,24 @@ html {
     float: left;
 }
 
-.list {
-
-}
-
 .list .list-item {
     height: 35px;
     border-bottom: 1px solid lightgray;
 }
 
+.list .list-item:hover {
+    cursor: pointer;
+}
+
 .list .list-item .list-item-txt {
     margin-left: 10px;
+}
+
+.product-card {
+    height: 150px;
+    width: 100px;
+    float: left;
+    margin: 10px;
+    border: 1px solid lightgray;
+    padding: 10px;
 }
