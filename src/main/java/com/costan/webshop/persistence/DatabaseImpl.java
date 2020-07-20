@@ -3,6 +3,7 @@ package com.costan.webshop.persistence;
 import com.costan.webshop.persistence.annotation.DbColumn;
 import com.costan.webshop.persistence.annotation.DbEntity;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -23,6 +24,16 @@ class DatabaseImpl implements Database {
 
     public DatabaseImpl() {
         entityClassTablePaths = new HashMap<>();
+    }
+
+    void resetDataSource() {
+        Path dir = Paths.get(DB_DIRECTORY_PATH);
+        File[] allContents = dir.toFile().listFiles();
+        if (allContents != null) {
+            for (File file : allContents) {
+                file.delete();
+            }
+        }
     }
 
     public void registerEntity(Class entityClass) {
@@ -83,7 +94,8 @@ class DatabaseImpl implements Database {
                     Class typeClass = field.getType();
                     Constructor typeConstructor = typeClass.getConstructor(String.class);
                     try {
-                        Object value = typeConstructor.newInstance(fieldValues[i]);
+                        String cleanFieldValue = fieldValues[i].replace(System.lineSeparator(), "");
+                        Object value = typeConstructor.newInstance(cleanFieldValue);
                         field.setAccessible(true);
                         field.set(entity, value);
                         field.setAccessible(false);

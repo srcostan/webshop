@@ -7,4 +7,8 @@ public interface ShopFacade {
     List<CategoryDTO> getAllCategories();
 
     List<ProductDTO> getProductsByCategory(String categoryId);
+
+    ShoppingCartDTO retrieveShoppingCart();
+
+    void addProductToShoppingCart(Integer productId);
 }

@@ -1,8 +1,6 @@
 package com.costan.webshop.business.api;
 
-import com.costan.webshop.business.domain.CategoryRepository;
-import com.costan.webshop.business.domain.DomainServiceLocator;
-import com.costan.webshop.business.domain.ProductRepository;
+import com.costan.webshop.business.domain.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +10,7 @@ class ShopFacadeImpl implements ShopFacade {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final ShoppingCartRepository shoppingCartRepository;
 
     public ShopFacadeImpl() {
         this(new DomainServiceLocator());
@@ -20,6 +19,7 @@ class ShopFacadeImpl implements ShopFacade {
     public ShopFacadeImpl(DomainServiceLocator domainServiceLocator) {
         productRepository = domainServiceLocator.getProductRepository();
         categoryRepository = domainServiceLocator.getCategoryRepository();
+        shoppingCartRepository = domainServiceLocator.getShoppingCartRepository();
     }
 
     @Override
@@ -34,5 +34,20 @@ class ShopFacadeImpl implements ShopFacade {
         return productRepository.findAllProducts().stream()
                 .map(p -> new ProductDTO(p.getId(), "cat selected " + categoryId + p.getTitle(), p.getPrice()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public ShoppingCartDTO retrieveShoppingCart() {
+        ShoppingCart shoppingCart = shoppingCartRepository.getShoppingCart();
+        List<ProductDTO> prods = shoppingCart.getProducts().stream()
+                .map(p -> new ProductDTO(p.getId(), p.getTitle(), p.getPrice()))
+                .collect(Collectors.toList());
+        return new ShoppingCartDTO(prods, shoppingCart.getTotalPrice());
+    }
+
+    @Override
+    public void addProductToShoppingCart(Integer productId) {
+        ShoppingCartEntry shoppingCartEntry = new ShoppingCartEntry(productId);
+        shoppingCartRepository.addShoppingCartEntry(shoppingCartEntry);
     }
 }

@@ -8,14 +8,16 @@ public class DbServiceLocator {
     private static Database database;
 
     private static final String[] entityClassNames = new String[] {
-      "com.costan.webshop.business.domain.Product",
-      "com.costan.webshop.business.domain.Category"
+        "com.costan.webshop.business.domain.Product",
+        "com.costan.webshop.business.domain.Category",
+        "com.costan.webshop.business.domain.ShoppingCartEntry"
     };
 
     public Database getDatabase() {
         if (database == null) {
             try {
                 DatabaseImpl dbImpl = new DatabaseImpl();
+                dbImpl.resetDataSource();
                 registerEntities(dbImpl);
                 database = dbImpl;
                 insertMockCategories();
