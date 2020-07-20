@@ -8,10 +8,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 class DatabaseImpl implements Database {
@@ -20,7 +17,7 @@ class DatabaseImpl implements Database {
     private static final String TABLE_SUFFIX = "_table";
     private static final String COLUMN_SEPARATOR = "###";
 
-    private Map<Class, Path> entityClassTablePaths;
+    private final Map<Class, Path> entityClassTablePaths;
 
     public DatabaseImpl() {
         entityClassTablePaths = new HashMap<>();
@@ -112,13 +109,10 @@ class DatabaseImpl implements Database {
     }
 
     private String getRowToWrite(Object entity) {
-        List<String> fieldValues = new ArrayList<>();
-        for (Field field : entity.getClass().getDeclaredFields()) {
-            if (field.isAnnotationPresent(DbColumn.class)) {
-                fieldValues.add(getFieldValue(entity, field));
-            }
-        }
-        return String.join(COLUMN_SEPARATOR, fieldValues) + System.lineSeparator();
+        return Arrays.asList(entity.getClass().getDeclaredFields())
+                .stream().filter(f -> f.isAnnotationPresent(DbColumn.class))
+                .map(f -> getFieldValue(entity, f))
+                .collect(Collectors.joining(COLUMN_SEPARATOR)) + System.lineSeparator();
     }
 
     private String getFieldValue(Object entity, Field field) {
