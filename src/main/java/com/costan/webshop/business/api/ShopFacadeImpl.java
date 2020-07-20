@@ -39,10 +39,10 @@ class ShopFacadeImpl implements ShopFacade {
     @Override
     public ShoppingCartDTO retrieveShoppingCart() {
         ShoppingCart shoppingCart = shoppingCartRepository.getShoppingCart();
-        List<ProductDTO> prods = shoppingCart.getProducts().stream()
+        List<ProductDTO> productsDTO = shoppingCart.getProducts().stream()
                 .map(p -> new ProductDTO(p.getId(), p.getTitle(), p.getPrice()))
                 .collect(Collectors.toList());
-        return new ShoppingCartDTO(prods, shoppingCart.getTotalPrice());
+        return new ShoppingCartDTO(productsDTO, shoppingCart.getTotalPrice());
     }
 
     @Override
