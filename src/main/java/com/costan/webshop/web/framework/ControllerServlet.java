@@ -1,5 +1,6 @@
 package com.costan.webshop.web.framework;
 
+import com.costan.webshop.config.ApplicationBootstrapper;
 import com.costan.webshop.web.framework.router.Router;
 
 import javax.servlet.ServletException;
@@ -15,24 +16,8 @@ public class ControllerServlet extends HttpServlet {
     @Override
     public void init() throws ServletException {
         super.init();
-        router = new Router();
-        initControllers();
-    }
-
-    private void initControllers() throws ServletException {
-        String[] controllersClassNames = new String[]{
-                "com.costan.webshop.web.controller.FrontPageController",
-                "com.costan.webshop.web.controller.ProductsController",
-                "com.costan.webshop.web.controller.ShoppingCartController"
-        };
-        try {
-            for (String controllerName : controllersClassNames) {
-                Class controllerClass = Class.forName(controllerName);
-                router.registerController(controllerClass);
-            }
-        } catch (Exception e) {
-            throw new ServletException(e);
-        }
+        //asta am vrut sa il injectez cu CDI dar nu am putut sa il fac sa mearga...
+        router = new ApplicationBootstrapper().getRouter();
     }
 
     @Override
@@ -56,5 +41,4 @@ public class ControllerServlet extends HttpServlet {
         }
         return new String[]{};
     }
-
 }

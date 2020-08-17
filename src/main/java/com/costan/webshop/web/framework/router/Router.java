@@ -2,6 +2,7 @@ package com.costan.webshop.web.framework.router;
 
 import com.costan.webshop.web.framework.ModelAndView;
 import com.costan.webshop.web.framework.annotation.Path;
+import com.costan.webshop.web.framework.annotation.WebController;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -16,10 +17,11 @@ public class Router {
         controllerRouter = new HashMap<>();
     }
 
-    public void registerController(Class controllerClass) {
-        Path controllerPath = (Path) controllerClass.getDeclaredAnnotation(Path.class);
+    public void registerController(Object controller) {
+        Class controllerClass = controller.getClass();
+        verifyIsController(controllerClass);
         try {
-            Object controller = controllerClass.getDeclaredConstructor().newInstance();
+            Path controllerPath = (Path) controllerClass.getDeclaredAnnotation(Path.class);
             ControllerMapping mapping = new ControllerMapping(controller);
             for (Method method : controllerClass.getMethods()) {
                 Path methodPath = method.getDeclaredAnnotation(Path.class);
@@ -41,6 +43,12 @@ public class Router {
             return controllerRouter.get(controllerPath).executeMethod(methodPath, parameters);
         } catch (InvocationTargetException | IllegalAccessException e) {
             throw new IllegalArgumentException(e);
+        }
+    }
+
+    private void verifyIsController(Class controllerClass) {
+        if (!controllerClass.isAnnotationPresent(WebController.class)) {
+            throw new IllegalArgumentException("The object registered must be a WebController");
         }
     }
 }

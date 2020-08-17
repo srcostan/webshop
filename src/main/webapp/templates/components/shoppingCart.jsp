@@ -4,6 +4,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <div>
     <div>Total amount: <fmt:formatNumber value="${shoppingCart.totalAmount}" type="currency" /> </div>
+    <button onclick='update("shoppingCart/emptyShoppingCart", "shopping-cart")'>Delete All</button>
     <c:forEach items="${shoppingCart.products}" var="product">
         <div>
             <c:out value="${product.title}" />

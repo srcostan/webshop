@@ -1,4 +1,4 @@
-package com.costan.webshop.business.domain;
+package com.costan.webshop.business.domain.model;
 
 import com.costan.webshop.persistence.annotation.DbColumn;
 import com.costan.webshop.persistence.annotation.DbEntity;
@@ -6,6 +6,7 @@ import com.costan.webshop.persistence.annotation.Id;
 
 @DbEntity
 public class Product {
+
     @Id
     @DbColumn
     private Integer id;

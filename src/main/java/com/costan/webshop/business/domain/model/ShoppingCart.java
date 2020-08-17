@@ -1,4 +1,4 @@
-package com.costan.webshop.business.domain;
+package com.costan.webshop.business.domain.model;
 
 import java.util.List;
 

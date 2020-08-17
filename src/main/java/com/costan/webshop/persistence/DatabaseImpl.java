@@ -2,35 +2,32 @@ package com.costan.webshop.persistence;
 
 import com.costan.webshop.persistence.annotation.DbColumn;
 import com.costan.webshop.persistence.annotation.DbEntity;
+import com.costan.webshop.persistence.annotation.DbManyToMany;
+import com.costan.webshop.persistence.annotation.Id;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.nio.channels.FileChannel;
 import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-class DatabaseImpl implements Database {
+public class DatabaseImpl implements Database {
 
     private static final String DB_DIRECTORY_PATH = "database_tables/";
     private static final String TABLE_SUFFIX = "_table";
+    private static final String TABLE_NAME_SEPARATOR = "_";
     private static final String COLUMN_SEPARATOR = "###";
 
     private final Map<Class, Path> entityClassTablePaths;
+    private final Map<JoinTable, Path> joinTablePaths;
 
     public DatabaseImpl() {
         entityClassTablePaths = new HashMap<>();
-    }
-
-    void resetDataSource() {
-        Path dir = Paths.get(DB_DIRECTORY_PATH);
-        File[] allContents = dir.toFile().listFiles();
-        if (allContents != null) {
-            for (File file : allContents) {
-                file.delete();
-            }
-        }
+        joinTablePaths = new HashMap<>();
     }
 
     public void registerEntity(Class entityClass) {
@@ -38,10 +35,9 @@ class DatabaseImpl implements Database {
             throw new IllegalArgumentException("class is not a db entity");
         }
         try {
-            Path tablePath = getTablePathFromEntityClass(entityClass);
-            entityClassTablePaths.put(entityClass, tablePath);
             createTableDirectory();
-            Files.createFile(tablePath);
+            registerEntityTable(entityClass);
+            registerJoinTables(entityClass);
         } catch (FileAlreadyExistsException existsException) {
             return;
         } catch (IOException e) {
@@ -75,6 +71,48 @@ class DatabaseImpl implements Database {
         }
     }
 
+    @Override
+    public <T> Optional<T> getEntityByPrimaryKey(Class<T> entityClass, Object primaryKey) {
+        return getAllRecords(entityClass)
+                .stream().filter(entity -> getPrimaryKeyValue(entity).equals(primaryKey))
+                .findFirst();
+    }
+
+    public <T> void deleteAllRecords(Class<T> entityClass) {
+        Path tablePath = entityClassTablePaths.get(entityClass);
+        try {
+            FileChannel.open(tablePath, StandardOpenOption.WRITE).truncate(0).close();
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private void registerEntityTable(Class entityClass) throws IOException {
+        Path tablePath = getTablePathFromEntityClass(entityClass);
+        entityClassTablePaths.put(entityClass, tablePath);
+        try {
+            Files.createFile(tablePath);
+        } catch (FileAlreadyExistsException e) {
+            //continue normal execution
+        }
+    }
+
+    private void registerJoinTables(Class entityClass) throws IOException {
+        for (Field field : entityClass.getDeclaredFields()) {
+            if (field.isAnnotationPresent(DbManyToMany.class)) {
+                ParameterizedType listType = (ParameterizedType) field.getGenericType();
+                Class<?> toJoinEntityType = (Class<?>) listType.getActualTypeArguments()[0];
+                Path joinTablePath = getJoinTablePathFromEntityClasses(entityClass, toJoinEntityType);
+                joinTablePaths.put(new JoinTable(entityClass, toJoinEntityType), joinTablePath);
+                try {
+                    Files.createFile(joinTablePath);
+                } catch (FileAlreadyExistsException e) {
+                    //continue normal execution
+                }
+            }
+        }
+    }
+
     private void createTableDirectory() throws IOException {
         if (!Files.exists(Paths.get(DB_DIRECTORY_PATH))) {
             Files.createDirectory(Paths.get(DB_DIRECTORY_PATH));
@@ -100,12 +138,44 @@ class DatabaseImpl implements Database {
                     } catch (IllegalAccessException e) {
                         throw new IllegalArgumentException(e);
                     }
+                } else if (field.isAnnotationPresent(DbManyToMany.class)) {
+                    ParameterizedType listType = (ParameterizedType) field.getGenericType();
+                    Class<?> toJoinEntityType = (Class<?>) listType.getActualTypeArguments()[0];
+                    String entityId = getPrimaryKeyValue(entity).toString();
+                    Path joinTablePath = joinTablePaths.get(new JoinTable(entity.getClass(), toJoinEntityType));
+                    List<String> joinTablePathsRows = Files.readAllLines(joinTablePath);
+                    List<String> toJoinEntityIds = joinTablePathsRows.stream()
+                            .filter(r -> r.split(COLUMN_SEPARATOR)[0].equals(entityId))
+                            .map(r -> r.split(COLUMN_SEPARATOR)[1]).collect(Collectors.toList());
+
+                    List<?> toJoinEntities = getAllRecords(toJoinEntityType).stream()
+                            .filter(ent -> toJoinEntityIds.contains(getPrimaryKeyValue(ent).toString()))
+                            .collect(Collectors.toList());
+                    field.setAccessible(true);
+                    field.set(entity, toJoinEntities);
+                    field.setAccessible(false);
                 }
             }
             return entity;
         } catch (Exception e) {
             throw new IllegalArgumentException(e);
         }
+    }
+
+    private Object getPrimaryKeyValue(Object entity) {
+        for (Field field : entity.getClass().getDeclaredFields()) {
+            if (field.isAnnotationPresent(Id.class)) {
+                try {
+                    field.setAccessible(true);
+                    Object value = field.get(entity);
+                    field.setAccessible(false);
+                    return value;
+                } catch (IllegalAccessException e) {
+                    throw new IllegalArgumentException(e);
+                }
+            }
+        }
+        throw new IllegalArgumentException("Primary key not found");
     }
 
     private String getRowToWrite(Object entity) {
@@ -128,5 +198,10 @@ class DatabaseImpl implements Database {
 
     private Path getTablePathFromEntityClass(Class entityClass) {
         return Paths.get(DB_DIRECTORY_PATH + entityClass.getSimpleName() + TABLE_SUFFIX);
+    }
+
+    private Path getJoinTablePathFromEntityClasses(Class firstEntityClass, Class secondEntityClass) {
+        return Paths.get(DB_DIRECTORY_PATH + firstEntityClass.getSimpleName()
+                + TABLE_NAME_SEPARATOR + secondEntityClass.getSimpleName() + TABLE_SUFFIX);
     }
 }

@@ -1,4 +1,4 @@
-package com.costan.webshop.business.api;
+package com.costan.webshop.business.api.dto;
 
 import java.util.List;
 
