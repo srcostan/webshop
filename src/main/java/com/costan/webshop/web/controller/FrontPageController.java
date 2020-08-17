@@ -21,6 +21,7 @@ public class FrontPageController {
     public ModelAndView retrieveFrontPage() {
         ModelAndView modelAndView = new ModelAndView();
         modelAndView.addData("categories", shopFacade.getAllCategories());
+        modelAndView.addData("shoppingCart", shopFacade.retrieveShoppingCart());
         modelAndView.setView("/templates/frontPage.jsp");
         return modelAndView;
     }
