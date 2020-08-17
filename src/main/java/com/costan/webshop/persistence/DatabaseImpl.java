@@ -123,40 +123,49 @@ public class DatabaseImpl implements Database {
             T entity = entityClass.getConstructor().newInstance();
             for (Field field : entity.getClass().getDeclaredFields()) {
                 if (field.isAnnotationPresent(DbColumn.class)) {
-                    Class typeClass = field.getType();
-                    Constructor typeConstructor = typeClass.getConstructor(String.class);
-                    try {
-                        String cleanFieldValue = fieldValues[i].replace(System.lineSeparator(), "");
-                        Object value = typeConstructor.newInstance(cleanFieldValue);
-                        field.setAccessible(true);
-                        field.set(entity, value);
-                        field.setAccessible(false);
-                        i++;
-                    } catch (IllegalAccessException e) {
-                        throw new IllegalArgumentException(e);
-                    }
+                    mapDbColumn(fieldValues[i], entity, field);
+                    i++;
                 } else if (field.isAnnotationPresent(DbManyToMany.class)) {
-                    ParameterizedType listType = (ParameterizedType) field.getGenericType();
-                    Class<?> toJoinEntityType = (Class<?>) listType.getActualTypeArguments()[0];
-                    String entityId = getPrimaryKeyValue(entity).toString();
-                    Path joinTablePath = joinTablePaths.get(new JoinTable(entity.getClass(), toJoinEntityType));
-                    List<String> joinTablePathsRows = Files.readAllLines(joinTablePath);
-                    List<String> toJoinEntityIds = joinTablePathsRows.stream()
-                            .filter(r -> r.split(dbConfig.getColumnSeparator())[0].equals(entityId))
-                            .map(r -> r.split(dbConfig.getColumnSeparator())[1]).collect(Collectors.toList());
-
-                    List<?> toJoinEntities = getAllRecords(toJoinEntityType).stream()
-                            .filter(ent -> toJoinEntityIds.contains(getPrimaryKeyValue(ent).toString()))
-                            .collect(Collectors.toList());
-                    field.setAccessible(true);
-                    field.set(entity, toJoinEntities);
-                    field.setAccessible(false);
+                    mapJoinTableReference(entity, field);
                 }
             }
             return entity;
         } catch (Exception e) {
             throw new IllegalArgumentException(e);
         }
+    }
+
+    private <T> void mapDbColumn(String fieldValue, T entity, Field field) throws NoSuchMethodException, InstantiationException, java.lang.reflect.InvocationTargetException {
+        Class typeClass = field.getType();
+        Constructor typeConstructor = typeClass.getConstructor(String.class);
+        try {
+            String cleanFieldValue = fieldValue.replace(System.lineSeparator(), "");
+            Object value = typeConstructor.newInstance(cleanFieldValue);
+            field.setAccessible(true);
+            field.set(entity, value);
+            field.setAccessible(false);
+        } catch (IllegalAccessException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    private <T> void mapJoinTableReference(T entity, Field field) throws IOException,
+            IllegalAccessException {
+        ParameterizedType listType = (ParameterizedType) field.getGenericType();
+        Class<?> toJoinEntityType = (Class<?>) listType.getActualTypeArguments()[0];
+        String entityId = getPrimaryKeyValue(entity).toString();
+        Path joinTablePath = joinTablePaths.get(new JoinTable(entity.getClass(), toJoinEntityType));
+        List<String> joinTablePathsRows = Files.readAllLines(joinTablePath);
+        List<String> toJoinEntityIds = joinTablePathsRows.stream()
+                .filter(r -> r.split(dbConfig.getColumnSeparator())[0].equals(entityId))
+                .map(r -> r.split(dbConfig.getColumnSeparator())[1]).collect(Collectors.toList());
+
+        List<?> toJoinEntities = getAllRecords(toJoinEntityType).stream()
+                .filter(ent -> toJoinEntityIds.contains(getPrimaryKeyValue(ent).toString()))
+                .collect(Collectors.toList());
+        field.setAccessible(true);
+        field.set(entity, toJoinEntities);
+        field.setAccessible(false);
     }
 
     private Object getPrimaryKeyValue(Object entity) {
@@ -176,8 +185,7 @@ public class DatabaseImpl implements Database {
     }
 
     private String getRowToWrite(Object entity) {
-        return Arrays.asList(entity.getClass().getDeclaredFields())
-                .stream().filter(f -> f.isAnnotationPresent(DbColumn.class))
+        return Arrays.stream(entity.getClass().getDeclaredFields()).filter(f -> f.isAnnotationPresent(DbColumn.class))
                 .map(f -> getFieldValue(entity, f))
                 .collect(Collectors.joining(dbConfig.getColumnSeparator())) + System.lineSeparator();
     }
