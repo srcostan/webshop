@@ -10,9 +10,16 @@ import com.costan.webshop.business.domain.repo.impl.ProductRepositoryImpl;
 import com.costan.webshop.business.domain.repo.impl.ShoppingCartRepositoryImpl;
 import com.costan.webshop.persistence.Database;
 import com.costan.webshop.persistence.DatabaseImpl;
+import com.costan.webshop.persistence.DbConfig;
 import com.costan.webshop.web.framework.router.Router;
 
 public class ApplicationBootstrapper {
+
+    private static final String DB_DIRECTORY_PATH = "database_tables/";
+    private static final String TABLE_SUFFIX = "_table";
+    private static final String TABLE_NAME_SEPARATOR = "_";
+    private static final String COLUMN_SEPARATOR = "###";
+
 
     public Router getRouter() {
         Router router = new Router();
@@ -39,12 +46,13 @@ public class ApplicationBootstrapper {
         CategoryRepository categoryRepository = new CategoryRepositoryImpl(database);
         ProductRepository productRepository = new ProductRepositoryImpl(database);
         ShoppingCartRepository shoppingCartRepository = new ShoppingCartRepositoryImpl(database);
-        ShopFacade shopFacade = new ShopFacadeImpl(productRepository, categoryRepository, shoppingCartRepository);
-        return shopFacade;
+        return new ShopFacadeImpl(productRepository, categoryRepository, shoppingCartRepository);
     }
 
     private Database getDatabase() {
-        DatabaseImpl database = new DatabaseImpl();
+        DbConfig dbConfig =
+                new DbConfig(DB_DIRECTORY_PATH, COLUMN_SEPARATOR, TABLE_NAME_SEPARATOR, TABLE_SUFFIX);
+        DatabaseImpl database = new DatabaseImpl(dbConfig);
         try {
             registerEntities(database);
         } catch (ClassNotFoundException e) {

@@ -17,15 +17,12 @@ import java.util.stream.Collectors;
 
 public class DatabaseImpl implements Database {
 
-    private static final String DB_DIRECTORY_PATH = "database_tables/";
-    private static final String TABLE_SUFFIX = "_table";
-    private static final String TABLE_NAME_SEPARATOR = "_";
-    private static final String COLUMN_SEPARATOR = "###";
-
+    private final DbConfig dbConfig;
     private final Map<Class, Path> entityClassTablePaths;
     private final Map<JoinTable, Path> joinTablePaths;
 
-    public DatabaseImpl() {
+    public DatabaseImpl(DbConfig dbConfig) {
+        this.dbConfig = dbConfig;
         entityClassTablePaths = new HashMap<>();
         joinTablePaths = new HashMap<>();
     }
@@ -114,13 +111,13 @@ public class DatabaseImpl implements Database {
     }
 
     private void createTableDirectory() throws IOException {
-        if (!Files.exists(Paths.get(DB_DIRECTORY_PATH))) {
-            Files.createDirectory(Paths.get(DB_DIRECTORY_PATH));
+        if (!Files.exists(Paths.get(dbConfig.getPath()))) {
+            Files.createDirectory(Paths.get(dbConfig.getPath()));
         }
     }
 
     private <T> T createEntityFromRow(Class<T> entityClass, String row) {
-        String[] fieldValues = row.split(COLUMN_SEPARATOR);
+        String[] fieldValues = row.split(dbConfig.getColumnSeparator());
         int i = 0;
         try {
             T entity = entityClass.getConstructor().newInstance();
@@ -145,8 +142,8 @@ public class DatabaseImpl implements Database {
                     Path joinTablePath = joinTablePaths.get(new JoinTable(entity.getClass(), toJoinEntityType));
                     List<String> joinTablePathsRows = Files.readAllLines(joinTablePath);
                     List<String> toJoinEntityIds = joinTablePathsRows.stream()
-                            .filter(r -> r.split(COLUMN_SEPARATOR)[0].equals(entityId))
-                            .map(r -> r.split(COLUMN_SEPARATOR)[1]).collect(Collectors.toList());
+                            .filter(r -> r.split(dbConfig.getColumnSeparator())[0].equals(entityId))
+                            .map(r -> r.split(dbConfig.getColumnSeparator())[1]).collect(Collectors.toList());
 
                     List<?> toJoinEntities = getAllRecords(toJoinEntityType).stream()
                             .filter(ent -> toJoinEntityIds.contains(getPrimaryKeyValue(ent).toString()))
@@ -182,7 +179,7 @@ public class DatabaseImpl implements Database {
         return Arrays.asList(entity.getClass().getDeclaredFields())
                 .stream().filter(f -> f.isAnnotationPresent(DbColumn.class))
                 .map(f -> getFieldValue(entity, f))
-                .collect(Collectors.joining(COLUMN_SEPARATOR)) + System.lineSeparator();
+                .collect(Collectors.joining(dbConfig.getColumnSeparator())) + System.lineSeparator();
     }
 
     private String getFieldValue(Object entity, Field field) {
@@ -197,11 +194,11 @@ public class DatabaseImpl implements Database {
     }
 
     private Path getTablePathFromEntityClass(Class entityClass) {
-        return Paths.get(DB_DIRECTORY_PATH + entityClass.getSimpleName() + TABLE_SUFFIX);
+        return Paths.get(dbConfig.getPath() + entityClass.getSimpleName() + dbConfig.getTableNameSuffix());
     }
 
     private Path getJoinTablePathFromEntityClasses(Class firstEntityClass, Class secondEntityClass) {
-        return Paths.get(DB_DIRECTORY_PATH + firstEntityClass.getSimpleName()
-                + TABLE_NAME_SEPARATOR + secondEntityClass.getSimpleName() + TABLE_SUFFIX);
+        return Paths.get(dbConfig.getPath() + firstEntityClass.getSimpleName()
+                + dbConfig.getTableNameSeparator() + secondEntityClass.getSimpleName() + dbConfig.getTableNameSuffix());
     }
 }
